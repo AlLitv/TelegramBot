@@ -4,7 +4,7 @@ from loader import dp
 from aiogram import types
 from aiogram.utils import exceptions
 from aiogram.dispatcher.filters import Command
-from data.config import admin_id, teacher
+from data.config import teacher
 from aiogram.dispatcher import FSMContext
 from states import TeacherState
 from data.sqllite3_bd import get_info_to_homework
@@ -55,7 +55,7 @@ async def get_data(state):
                                                                            callback_data="setAnswerFromGet")
                                                                    ],
                                                                    [
-                                                                       types.InlineKeyboardButton(text="Отмена",
+                                                                       types.InlineKeyboardButton(text="Закончить",
                                                                                                   callback_data="cancel")
                                                                    ]
                                                                ])
@@ -102,11 +102,11 @@ async def set_homewor_result(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(user_id=teacher, text_contains="cancel", state="*")
 async def default_menu(call: types.CallbackQuery, state: FSMContext):
-    await TeacherState.default.set()
+    await call.message.edit_reply_markup()
     await call.message.delete()
     async with state.proxy() as data:
-        await call.message.edit_reply_markup()
         await call.message.answer("Что хотите сделать?", reply_markup=data['markupDefaultMenu'])
+    await TeacherState.default.set()
 
 
 @dp.callback_query_handler(user_id=teacher, text_contains="setAnswer", state=TeacherState.default)
@@ -138,6 +138,7 @@ async def set_homework_result(message: types.Message, state: FSMContext):
             await dp.bot.send_message(chat_id=int(data['activ_student']), text="Твоя работа проверенна!")
             await dp.bot.send_photo(chat_id=int(data['activ_student']), photo=message.photo[-1].file_id)
             await message.answer("Работа отправлена!Что делаем дальше?", reply_markup=data['markupDefaultMenu'])
+            data['activ_student'] = None
         await TeacherState.default.set()
     except exceptions.BotBlocked:
         await message.answer("Не удалось отправить фото! Пользователь заблокировал меня! Может что то еще?",
@@ -152,4 +153,5 @@ async def end_examination(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
     await call.message.answer("Увидимся!")
     await state.finish()
+    await state.reset_state()
 
