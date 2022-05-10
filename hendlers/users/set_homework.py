@@ -25,10 +25,19 @@ async def start_submit_homework(message: types.Message, state: FSMContext):
 
 @dp.message_handler(content_types=['photo'], state=Questions_homework.set_photo)
 async def seting_photo(message: types.Message, state:FSMContext):
-    async with state.proxy() as data:
-        data["photo"] = message.photo[0].file_id
-    await message.answer("Ты отправил нужное фото?")
-    await Questions_homework.end_homework.set()
+        if not await state.get_data():
+            await state.update_data(photo=[message.photo[-1].file_id])
+            await message.answer("Ты отправил нужное фото?")
+            await Questions_homework.end_homework.set()
+        else:
+            my_list = await state.get_data()
+            photos = my_list.get("photo")
+            photos.append(message.photo[-1].file_id)
+            await state.update_data(photo=photos)
+    # async with state.proxy() as data:
+    #     data["photo"] = message.photo[0].file_id
+    # await message.answer("Ты отправил нужное фото?")
+    # await Questions_homework.end_homework.set()
 
 
 @dp.message_handler(content_types=['text'], state=Questions_homework.end_homework)
@@ -37,9 +46,10 @@ async def finished_submit(message: types.Message, state:FSMContext):
         await message.answer("Отлично! Скоро узнаешь результат!")
         async with state.proxy() as data:
             date = datetime.datetime.today().strftime("%Y-%m-%d")
-            await sqllite3_bd.add_info_bd_homework("users_homework", data['photo'], message.from_user.id, date)
+            for i in data['photo']:
+                await sqllite3_bd.add_info_bd_homework("users_homework", i, message.from_user.id, date)
             await dp.bot.send_message(chat_id=448768892, text='Ученик отправил вам домашнее задание')
-            await dp.bot.send_photo(chat_id=448768892, photo=data['photo'])
+            #await dp.bot.send_photo(chat_id=448768892, photo=data['photo'])
         await state.finish()
 
     elif message.text.lower() == 'нет':

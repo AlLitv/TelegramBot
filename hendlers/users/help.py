@@ -6,7 +6,7 @@ from data import config
 @dp.message_handler(text='/help')
 async def command_start(message: types.Message):
     await message.answer_sticker(config.stiker_id['help_stiker'])
-    await message.answer(f"Привет! Я — <b>Энди</b>, попугай из тропиков.\n"
+    await message.answer(f"<b>Энди</b>, на связи, прием!.\n"
                          f"Для того что бы начать историю сначала нужно зарегистрироваться!\n"
                          f"Для регистрации введи /registrs!\n"
                          f"После этого введи /start_history что бы начать иисторию!\n"

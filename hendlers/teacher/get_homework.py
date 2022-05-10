@@ -92,7 +92,7 @@ async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
 
 
 @dp.callback_query_handler(user_id=teacher, text_contains="setAnswerFromGet", state=TeacherState.default)
-async def set_homewor_result(call: types.CallbackQuery, state: FSMContext):
+async def set_homework_result(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup()
     await call.message.delete()
     async with state.proxy() as data:
