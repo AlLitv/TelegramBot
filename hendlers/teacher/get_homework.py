@@ -4,7 +4,6 @@
 и далее выводим клавиатуру с возможными действиями.
 '''
 
-
 import asyncio
 
 from loader import dp
@@ -17,9 +16,7 @@ from states import TeacherState
 from data.sqllite3_bd import get_info_to_user, get_homework_user_in_date
 
 
-
-
-async def get_data(state):# получаем все данные требуемые для выполнения скриптов
+async def get_data(state):  # получаем все данные требуемые для выполнения скриптов
     inline_keyboard = []
     info_in_us = {}
     data = await get_info_to_user()
@@ -62,17 +59,17 @@ async def get_data(state):# получаем все данные требуем�
                                                                    ]
                                                                ])
         data['markupFromGetInSetMenu'] = types.InlineKeyboardMarkup(row_width=2,
-                                                               inline_keyboard=[
-                                                                   [
-                                                                       types.InlineKeyboardButton(
-                                                                           text="Ответить ученику ответ фотографией",
-                                                                           callback_data="setAnswerFromGet")
-                                                                   ],
-                                                                   [
-                                                                       types.InlineKeyboardButton(text="Закончить",
-                                                                                                  callback_data="cancel")
-                                                                   ]
-                                                               ])
+                                                                    inline_keyboard=[
+                                                                        [
+                                                                            types.InlineKeyboardButton(
+                                                                                text="Ответить ученику ответ фотографией",
+                                                                                callback_data="setAnswerFromGet")
+                                                                        ],
+                                                                        [
+                                                                            types.InlineKeyboardButton(text="Закончить",
+                                                                                                       callback_data="cancel")
+                                                                        ]
+                                                                    ])
 
 
 @dp.message_handler(Command('homework'), user_id=teacher)
@@ -93,6 +90,14 @@ async def start_get_homework(message: types.Message, state: FSMContext):
 #         await call.message.answer('Получить домашнюю работу:', reply_markup=markupMenuUse)
 #         await TeacherState.get_homework.set()
 
+@dp.callback_query_handler(user_id=teacher, text_contains="cancel", state="*")
+async def default_menu(call: types.CallbackQuery, state: FSMContext):
+    await call.message.edit_reply_markup()
+    await call.message.delete()
+    async with state.proxy() as data:
+        await call.message.answer("Что хотите сделать?", reply_markup=data['markupDefaultMenu'])
+    await TeacherState.default.set()
+
 
 @dp.callback_query_handler(user_id=teacher, text_contains="getHomework", state=TeacherState.default)
 async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
@@ -105,25 +110,23 @@ async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
         await TeacherState.choose_date.set()
 
 
-#Получаем список дат и домашних работ учеников в эти даты
+# Получаем список дат и домашних работ учеников в эти даты
 @dp.callback_query_handler(user_id=teacher, state=TeacherState.choose_date)
 async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         await call.message.edit_reply_markup()
         await call.message.delete()
         inline_keyboard = []
-        id_user = int(call.data) # получаем id пользователя которого выбрал учитель
+
+        id_user = int(call.data)  # получаем id пользователя которого выбрал учитель
         for date in data[id_user][2].keys():
             inline_keyboard.append([types.InlineKeyboardButton(text=f'{date}',
-                                                               callback_data=f'{str(id_user) +" "+ date}')])
+                                                               callback_data=f'{str(id_user) + " " + date}')])
         inline_keyboard.append([types.InlineKeyboardButton(text="Отмена", callback_data="cancel")])
         markupMenuDate = types.InlineKeyboardMarkup(row_width=len(data[id_user][2]) + 1,
-                                                   inline_keyboard=inline_keyboard)
+                                                    inline_keyboard=inline_keyboard)
         await call.message.answer('Даты в которые ученик сдал дз:', reply_markup=markupMenuDate)
         await TeacherState.get_homework.set()
-
-
-
 
 
 @dp.callback_query_handler(user_id=teacher, state=TeacherState.get_homework)
@@ -144,18 +147,8 @@ async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
 async def set_homework_result(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup()
     await call.message.delete()
-    async with state.proxy() as data:
-        await call.message.answer("Отправьте мне фото!")
-        await TeacherState.expect_photo.set()
-
-
-@dp.callback_query_handler(user_id=teacher, text_contains="cancel", state="*")
-async def default_menu(call: types.CallbackQuery, state: FSMContext):
-    await call.message.edit_reply_markup()
-    await call.message.delete()
-    async with state.proxy() as data:
-        await call.message.answer("Что хотите сделать?", reply_markup=data['markupDefaultMenu'])
-    await TeacherState.default.set()
+    await call.message.answer("Отправьте мне фото!")
+    await TeacherState.expect_photo.set()
 
 
 @dp.callback_query_handler(user_id=teacher, text_contains="setAnswer", state=TeacherState.default)
@@ -196,6 +189,7 @@ async def set_homework_result(message: types.Message, state: FSMContext):
     except Exception as err:
         print(err)
 
+
 @dp.callback_query_handler(user_id=teacher, text_contains="end", state="*")
 async def end_examination(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup()
@@ -203,4 +197,3 @@ async def end_examination(call: types.CallbackQuery, state: FSMContext):
     await call.message.answer("Увидимся!")
     await state.finish()
     await state.reset_state()
-
