@@ -1,3 +1,10 @@
+'''
+По команде /homework выполняется следующий алгоритм:
+получаем данные из БД и записываем их в оперативную память
+и далее выводим клавиатуру с возможными действиями.
+'''
+
+
 import asyncio
 
 from loader import dp
@@ -7,23 +14,30 @@ from aiogram.dispatcher.filters import Command
 from data.config import teacher
 from aiogram.dispatcher import FSMContext
 from states import TeacherState
-from data.sqllite3_bd import get_info_to_homework
-
-markupСancel = types.InlineKeyboardMarkup(row_width=1,
-                                          inline_keyboard=[
-                                              [types.InlineKeyboardButton(text="Отмена", callback_data="cancel")]
-                                          ])
+from data.sqllite3_bd import get_info_to_user, get_homework_user_in_date
 
 
-# list_data_user = []
-async def get_data(state):
+
+
+async def get_data(state):# получаем все данные требуемые для выполнения скриптов
     inline_keyboard = []
     info_in_us = {}
-    data = await get_info_to_homework()
-    for id_user, surname, first_name, token_file, date in data:
-        info_in_us[id_user] = (surname, first_name, token_file, date)
+    data = await get_info_to_user()
+    for id_user, surname, first_name in data:
+        info_in_us[id_user] = [surname, first_name]
         inline_keyboard.append([types.InlineKeyboardButton(text=f'{surname + " " + first_name}',
                                                            callback_data=f'{id_user}')])
+
+    for id in info_in_us.keys():
+        token_file_list = {}
+        info_in_us[id].append(dict(token_file_list))
+        data_homework = await get_homework_user_in_date(id)
+        for token_file, delivery_date in data_homework:
+            try:
+                info_in_us[id][2][delivery_date].append(token_file)
+            except KeyError:
+                info_in_us[id][2][delivery_date] = list()
+                info_in_us[id][2][delivery_date].append(token_file)
     inline_keyboard.append([types.InlineKeyboardButton(text="Отмена", callback_data="cancel")])
     async with state.proxy() as data:
         for i in info_in_us.keys():
@@ -69,6 +83,17 @@ async def start_get_homework(message: types.Message, state: FSMContext):
         await TeacherState.default.set()
 
 
+# @dp.callback_query_handler(user_id=teacher, text_contains="getHomework", state=TeacherState.default)
+# async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
+#     async with state.proxy() as data:
+#         await call.message.edit_reply_markup()
+#         await call.message.delete()
+#         markupMenuUse = types.InlineKeyboardMarkup(row_width=data['inline_keyboard'][1],
+#                                                    inline_keyboard=data['inline_keyboard'][0])
+#         await call.message.answer('Получить домашнюю работу:', reply_markup=markupMenuUse)
+#         await TeacherState.get_homework.set()
+
+
 @dp.callback_query_handler(user_id=teacher, text_contains="getHomework", state=TeacherState.default)
 async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
@@ -77,17 +102,41 @@ async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
         markupMenuUse = types.InlineKeyboardMarkup(row_width=data['inline_keyboard'][1],
                                                    inline_keyboard=data['inline_keyboard'][0])
         await call.message.answer('Получить домашнюю работу:', reply_markup=markupMenuUse)
+        await TeacherState.choose_date.set()
+
+
+#Получаем список дат и домашних работ учеников в эти даты
+@dp.callback_query_handler(user_id=teacher, state=TeacherState.choose_date)
+async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        await call.message.edit_reply_markup()
+        await call.message.delete()
+        inline_keyboard = []
+        id_user = int(call.data) # получаем id пользователя которого выбрал учитель
+        for date in data[id_user][2].keys():
+            inline_keyboard.append([types.InlineKeyboardButton(text=f'{date}',
+                                                               callback_data=f'{str(id_user) +" "+ date}')])
+        inline_keyboard.append([types.InlineKeyboardButton(text="Отмена", callback_data="cancel")])
+        markupMenuDate = types.InlineKeyboardMarkup(row_width=len(data[id_user][2]) + 1,
+                                                   inline_keyboard=inline_keyboard)
+        await call.message.answer('Даты в которые ученик сдал дз:', reply_markup=markupMenuDate)
         await TeacherState.get_homework.set()
+
+
+
 
 
 @dp.callback_query_handler(user_id=teacher, state=TeacherState.get_homework)
 async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup()
-    key = call.data
+    id, key = call.data.split()
     await call.message.delete()
     async with state.proxy() as data:
-        await dp.bot.send_photo(chat_id=teacher, photo=data[int(key)][2], reply_markup=data['markupFromGetInSetMenu'])
-        data['activ_student'] = int(key)
+        for photo in data[int(id)][2][key]:
+            await dp.bot.send_photo(chat_id=teacher, photo=photo)
+            await asyncio.sleep(0.1)
+        await call.message.answer("Что дальше?", reply_markup=data['markupFromGetInSetMenu'])
+        data['activ_student'] = int(id)
         await TeacherState.default.set()
 
 

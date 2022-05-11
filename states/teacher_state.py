@@ -7,4 +7,5 @@ class TeacherState(StatesGroup):
     default = State()
     setAnswer = State()
     expect_photo = State()
+    choose_date = State()
     end = State()

@@ -1,3 +1,4 @@
+import asyncio
 import sqlite3 as sq
 
 
@@ -62,11 +63,23 @@ async def fill_in_data_bd():
     return resalt
 
 
-async def get_info_to_homework():
+async def get_info_to_user():
     bd_name = 'bd_bot.db'
     db = sq.connect(bd_name)
     cur = db.cursor()
-    cur.execute(f'''SELECT id, surname, name, token_file, delivery_date FROM users JOIN 'users_homework' ON userId=id''')
+    cur.execute(f'''SELECT DISTINCT id, surname, name FROM users JOIN 'users_homework' ON userId=id''')
     resalt = cur.fetchall()
     db.close()
     return resalt
+
+
+async def get_homework_user_in_date(id):
+    bd_name = 'bd_bot.db'
+    db = sq.connect(bd_name)
+    cur = db.cursor()
+    cur.execute(f'''SELECT token_file, delivery_date FROM users JOIN 'users_homework' 
+                    ON userId=id WHERE id = {id}''')
+    resalt = cur.fetchall()
+    db.close()
+    return resalt
+
