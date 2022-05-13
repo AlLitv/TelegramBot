@@ -79,7 +79,7 @@ async def finished_submit(call: types.CallbackQuery, state:FSMContext):
         async with state.proxy() as data:
             date = datetime.datetime.today().strftime("%Y-%m-%d")
             for i in data['photo']:
-                await sqllite3_bd.add_info_bd_homework("users_homework", i, call.message.from_user.id, date)
+                await sqllite3_bd.add_info_bd_homework("users_homework", i, call.from_user.id, date)
             await dp.bot.send_message(chat_id=teacher, text='Ученик отправил вам домашнее задание')
             #await dp.bot.send_photo(chat_id=448768892, photo=data['photo'])
         await state.finish()
