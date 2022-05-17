@@ -54,7 +54,7 @@ async def age_registers(message: types.Message, state: FSMContext):
     try:
         async with state.proxy() as data:
             data['age'] = int(message.text)
-            await message.answer('В каком классе ты учишься? Напиши только цифру!')
+            await message.answer('В каком классе ты учишься? Напиши только цифру!Если не учишься в школе введи 0')
             await Questions_registrs.questions_class.set()
     except ValueError:
         await message.answer('Ты ввел не число! Попробуй еще раз!')

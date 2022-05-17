@@ -11,8 +11,8 @@ BOT_TOKEN = str(os.getenv('BOT_TOKEN'))
 
 
 admin_id = [
-    864770563
-    #448768892
+    864770563,
+    448768892
 ]
 
 
