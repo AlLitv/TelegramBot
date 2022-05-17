@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram import types
 from aiogram.dispatcher.filters import Command
 from data import sqllite3_bd
-from datetime import datetime
+from datetime import datetime, date
 import asyncio
 
 
@@ -15,7 +15,7 @@ async def history(user_id):
     day_three = False
     day_four = False
     day_five = False
-    date_start = datetime.today().date()
+    date_start: date = datetime.today().date()
     while True:
         #date_registr = await sqllite3_bd.get_date_registr(user_id)
         #date_reg = datetime.strptime(str(date_registr), "%Y-%m-%d").date()
@@ -64,8 +64,6 @@ async def history(user_id):
             day_two = True
             await dp.bot.send_sticker(chat_id=user_id, sticker=hist.stick[day_namber])
             await dp.bot.send_message(chat_id=user_id, text=hist.message[day_namber])
-            await dp.bot.send_photo(chat_id=user_id, photo=hist.file[day_namber])
-            await dp.bot.send_video(chat_id=user_id, video=hist.video[day_namber])
         await asyncio.sleep(delay_in_second)
 
 

@@ -1,7 +1,7 @@
 '''
 По команде /homework выполняется следующий алгоритм:
 получаем данные из БД и записываем их в оперативную память
-и далее выводим клавиатуру с возможными действиями.
+и далее выводим клавиатуру. Выбираем действия с домашними работами учеников.
 '''
 
 import asyncio
@@ -39,6 +39,7 @@ async def get_data(state):  # получаем все данные требуе�
     async with state.proxy() as data:
         for i in info_in_us.keys():
             data[i] = info_in_us[i]
+        #Формируем клавиатуры и добавляем их в оперативную память
         data['inline_keyboard'] = (inline_keyboard, len(data) + 1)
         data['markupDefaultMenu'] = types.InlineKeyboardMarkup(row_width=3,
                                                                inline_keyboard=[
@@ -66,7 +67,24 @@ async def get_data(state):  # получаем все данные требуе�
                                                                                 callback_data="setAnswerFromGet")
                                                                         ],
                                                                         [
-                                                                            types.InlineKeyboardButton(text="Закончить",
+                                                                            types.InlineKeyboardButton(text="Отмена",
+                                                                                                       callback_data="cancel")
+                                                                        ]
+                                                                    ])
+        data['markupMenuGoodBad'] = types.InlineKeyboardMarkup(row_width=2,
+                                                                    inline_keyboard=[
+                                                                        [
+                                                                            types.InlineKeyboardButton(
+                                                                                text="Ученик ответил верно!",
+                                                                                callback_data="homeworkGood")
+                                                                        ],
+                                                                        [
+                                                                            types.InlineKeyboardButton(
+                                                                                text="Ученик ответил не верно!",
+                                                                                callback_data="homeworkBad")
+                                                                        ],
+                                                                        [
+                                                                            types.InlineKeyboardButton(text="Отмена",
                                                                                                        callback_data="cancel")
                                                                         ]
                                                                     ])
@@ -80,16 +98,6 @@ async def start_get_homework(message: types.Message, state: FSMContext):
         await TeacherState.default.set()
 
 
-# @dp.callback_query_handler(user_id=teacher, text_contains="getHomework", state=TeacherState.default)
-# async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
-#     async with state.proxy() as data:
-#         await call.message.edit_reply_markup()
-#         await call.message.delete()
-#         markupMenuUse = types.InlineKeyboardMarkup(row_width=data['inline_keyboard'][1],
-#                                                    inline_keyboard=data['inline_keyboard'][0])
-#         await call.message.answer('Получить домашнюю работу:', reply_markup=markupMenuUse)
-#         await TeacherState.get_homework.set()
-
 @dp.callback_query_handler(user_id=teacher, text_contains="cancel", state="*")
 async def default_menu(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup()
@@ -98,7 +106,7 @@ async def default_menu(call: types.CallbackQuery, state: FSMContext):
         await call.message.answer("Что хотите сделать?", reply_markup=data['markupDefaultMenu'])
     await TeacherState.default.set()
 
-
+# Получаем домашнюю работу ученик
 @dp.callback_query_handler(user_id=teacher, text_contains="getHomework", state=TeacherState.default)
 async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
@@ -128,7 +136,7 @@ async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
         await call.message.answer('Даты в которые ученик сдал дз:', reply_markup=markupMenuDate)
         await TeacherState.get_homework.set()
 
-
+#Отправка ответа учителю в зависимости от его выбора
 @dp.callback_query_handler(user_id=teacher, state=TeacherState.get_homework)
 async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup()
@@ -142,7 +150,7 @@ async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
         data['activ_student'] = int(id)
         await TeacherState.default.set()
 
-
+#Если отправляем ответ то ожидаем фото проверенной работы
 @dp.callback_query_handler(user_id=teacher, text_contains="setAnswerFromGet", state=TeacherState.default)
 async def set_homework_result(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup()
