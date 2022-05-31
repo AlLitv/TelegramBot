@@ -44,7 +44,7 @@ async def start_submit_homework(message: types.Message, state: FSMContext):
         await Questions_homework.set_photo.set()
 
 
-@dp.callback_query_handler(text_contains="end", state='*')
+@dp.callback_query_handler(text_contains="end", state=Questions_homework.all_states)
 async def end_set_homework(call: types.CallbackQuery, state:FSMContext):
     await call.message.edit_reply_markup()
     await call.message.answer("Приходи как доделаешь!")
@@ -54,7 +54,7 @@ async def end_set_homework(call: types.CallbackQuery, state:FSMContext):
 
 
 @dp.message_handler(content_types=['photo'], state=Questions_homework.set_photo)
-async def seting_photo(message: types.Message, state:FSMContext):
+async def seting_photo(message: types.Message, state: FSMContext):
     if not await state.get_data():
         await state.update_data(photo=[message.photo[-1].file_id])
         await message.answer("Ты отправил нужное фото?", reply_markup=markupKebord)
@@ -80,7 +80,8 @@ async def finished_submit(call: types.CallbackQuery, state:FSMContext):
             date = datetime.datetime.today().strftime("%Y-%m-%d")
             for i in data['photo']:
                 await sqllite3_bd.add_info_bd_homework("users_homework", i, call.from_user.id, date)
-            await dp.bot.send_message(chat_id=teacher, text='Ученик отправил вам домашнее задание')
+            full_name = await sqllite3_bd.get_full_name_from_db(call.from_user.id)
+            await dp.bot.send_message(chat_id=teacher, text=f'Ученик {full_name} отправил вам домашнее задание')
             #await dp.bot.send_photo(chat_id=448768892, photo=data['photo'])
         await state.finish()
     elif answer == 'no':

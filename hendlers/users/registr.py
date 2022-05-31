@@ -1,13 +1,26 @@
+from aiogram.dispatcher.storage import FSMContextProxy
+
 from loader import dp
 from aiogram.dispatcher import FSMContext
 from aiogram import types
 from aiogram.dispatcher.filters import Command
-from data.config import admin_id
+from data.config import admin_id, teacher
 from data import sqllite3_bd
 import datetime
 
 from states.registers import Questions_registrs
 
+markupKebordPay = types.InlineKeyboardMarkup(row_width=2, inline_keyboard=[
+                                                                   [
+                                                                       types.InlineKeyboardButton(
+                                                                           text="Да",
+                                                                           callback_data="yes"),
+                                                                       types.InlineKeyboardButton(
+                                                                           text="Нет",
+                                                                           callback_data="no")
+
+                                                                   ]
+                                                               ])
 
 async def message_end_registr(message, data):
     await message.answer('Регистрация завершна! Проверьте введнные данные!')
@@ -31,6 +44,7 @@ async def start_registers(message: types.Message, state: FSMContext):
     else:
         await message.answer("Ты уже зарегистрирован!")
         await state.finish()
+
 
 
 @dp.message_handler(content_types=['text'], state=Questions_registrs.questions_name)
@@ -79,12 +93,19 @@ async def age_registers(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=['text'], state=Questions_registrs.end_registr)
 async def end_registrs(message: types.Message, state: FSMContext):
     if message.text.lower() == "да":
-        await message.answer('Регистрация успешно завершена!')
+        await message.answer('Спасибо за регистрацию!Для того что бы история началась оплати 1000р по ссылке\n'
+                             '\nhttps://www.tinkoff.ru/rm/litvinova.natalya256/gSr9A90857\n'
+                             'Обязательно в коментариях укажи фамилию и имя участника смены\n'
+                             'Только с 1 по 5 июня действует скидка <b>50%</b>\n'
+                             'Ожидайте подтверждения оплаты!\n'
+                             'Если возникли сложности напишите @natali_shumilo_repetitor',
+                             parse_mode='html')
         async with state.proxy() as data:
             age = datetime.datetime.now().year
             month = datetime.datetime.now().month
             day = datetime.datetime.now().day
             date = datetime.datetime.today().strftime("%Y-%m-%d")
+            await sqllite3_bd.set_pay_status_none(message.from_user.id)
             await sqllite3_bd.add_info_bd("users",
                                             message.from_user.id,
                                                      data['name'],
@@ -93,6 +114,8 @@ async def end_registrs(message: types.Message, state: FSMContext):
                                                      data['age'],
                                                      date
                                                      )
+            await dp.bot.send_message(chat_id=admin_id[1], text=f'Пользователь {data["name"] + " " + data["surname"]}'
+                                                                f' Подтвердите оплату.')
         await state.finish()
     elif message.text.lower() == "нет":
         await message.answer('Где ты ошибся?'
@@ -101,6 +124,8 @@ async def end_registrs(message: types.Message, state: FSMContext):
                              'В возрасте?'
                              'В классе?')
         await Questions_registrs.error_enter.set()
+
+
 
 
 @dp.message_handler(content_types=['text'], state=Questions_registrs.error_enter)

@@ -16,7 +16,7 @@ admin_id = [
 ]
 
 
-teacher = 864770563
+teacher = 448768892
 
 stiker_id = {
     'start_stiker' : 'CAACAgIAAxkBAAEEjcNiZiMoSTQ4-OE5I0imypxWbNTEygACxxgAArfUeElKxssIBSHQXiQE',

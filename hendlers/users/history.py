@@ -2,7 +2,7 @@ from loader import dp, hist
 from aiogram.dispatcher import FSMContext
 from aiogram import types
 from aiogram.dispatcher.filters import Command
-from data import sqllite3_bd
+from data.sqllite3_bd import get_user_pay
 from datetime import datetime, date
 import asyncio
 
@@ -15,6 +15,7 @@ async def history(user_id):
     day_three = False
     day_four = False
     day_five = False
+    day_six = False
     date_start: date = datetime.today().date()
     while True:
         #date_registr = await sqllite3_bd.get_date_registr(user_id)
@@ -22,16 +23,22 @@ async def history(user_id):
         date_now = datetime.today().date()
         difference = date_now - date_start
         time_now = datetime.now().hour
-        time_start = 12
-        delay_in_second = 15 * 60
-        if day_five and difference.days == 4 and time_now == time_start:
+        time_start = 23
+        delay_in_second = 6
+        difference_days = difference.days
+        if day_six and difference_days == 5 and time_now == time_start:
+            day_namber = 6
+            await dp.bot.send_message(chat_id=user_id, text=hist.message[day_namber])
+            break
+        elif day_five and difference_days == 4 and time_now == time_start:
             day_namber = 5
+            day_five = False
+            day_six = True
             await dp.bot.send_sticker(chat_id=user_id, sticker=hist.stick[day_namber])
             await dp.bot.send_message(chat_id=user_id, text=hist.message[day_namber])
             await dp.bot.send_photo(chat_id=user_id, photo=hist.file[day_namber])
             await dp.bot.send_video(chat_id=user_id, video=hist.video[day_namber])
-            break
-        elif day_four and difference.days == 3 and time_now == time_start:
+        elif day_four and difference_days == 3 and time_now == time_start:
             day_namber = 4
             day_four = False
             day_five = True
@@ -40,7 +47,7 @@ async def history(user_id):
             await dp.bot.send_photo(chat_id=user_id, photo=hist.file[day_namber])
             await dp.bot.send_video(chat_id=user_id, video=hist.video[day_namber])
 
-        elif day_three and difference.days == 2 and time_now == time_start:
+        elif day_three and difference_days == 2 and time_now == time_start:
             day_namber = 3
             day_three = False
             day_four = True
@@ -49,7 +56,7 @@ async def history(user_id):
             await dp.bot.send_photo(chat_id=user_id, photo=hist.file[day_namber])
             await dp.bot.send_video(chat_id=user_id, video=hist.video[day_namber])
 
-        elif day_two and difference.days == 1 and time_now == time_start:
+        elif day_two and difference_days == 1 and time_now == time_start:
             day_namber = 2
             day_two = False
             day_three = True
@@ -69,7 +76,7 @@ async def history(user_id):
 
 @dp.message_handler(Command('start_history'), state=None)
 async def start_hist(message: types.Message, state: FSMContext):
-    if await sqllite3_bd.select_info_to_id(message.from_user.id) is None:
-        await message.answer('Ты еще не прощел регистрацию!')
+    if await get_user_pay(message.from_user.id) == 1:
+        await message.answer('Оплата не подтверждена!')
     else:
         await history(message.from_user.id)
