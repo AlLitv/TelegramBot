@@ -5,6 +5,9 @@
 '''
 
 import asyncio
+from typing import List
+
+from aiogram.types.base import String
 
 from loader import dp
 from aiogram import types
@@ -56,7 +59,7 @@ async def get_data(state):  # получаем все данные требуе�
                                                                    ],
                                                                    [
                                                                        types.InlineKeyboardButton(text="Выход",
-                                                                                                  callback_data="end")
+                                                                                                  callback_data="endGethomework")
                                                                    ]
                                                                ])
         data['markupFromGetInSetMenu'] = types.InlineKeyboardMarkup(row_width=2,
@@ -155,7 +158,7 @@ async def get_homeworks(call: types.CallbackQuery, state: FSMContext):
 async def set_homework_result(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup()
     await call.message.delete()
-    await call.message.answer("Отправьте мне фото!")
+    await call.message.answer("Отправьте мне PDF Файл!")
     await TeacherState.expect_photo.set()
 
 
@@ -177,28 +180,25 @@ async def set_homewor_result(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
     async with state.proxy() as data:
         data['activ_student'] = key
-        await call.message.answer("Отправьте мне фото!")
+        await call.message.answer("Отправьте мне PDF файл!")
         await TeacherState.expect_photo.set()
 
 
-@dp.message_handler(user_id=teacher, content_types=['photo'], state=TeacherState.expect_photo)
+@dp.message_handler(user_id=teacher, content_types=['document'], state=TeacherState.expect_photo)
 async def set_homework_result(message: types.Message, state: FSMContext):
-    try:
-        async with state.proxy() as data:
+    async with state.proxy() as data:
+        try:
             await dp.bot.send_message(chat_id=int(data['activ_student']), text="Твоя работа проверенна!")
-            await dp.bot.send_photo(chat_id=int(data['activ_student']), photo=message.photo[-1].file_id)
-            await message.answer("Работа отправлена!Что делаем дальше?", reply_markup=data['markupDefaultMenu'])
+            await dp.bot.send_document(chat_id=int(data['activ_student']), document=message.document.file_id)
             data['activ_student'] = None
-        await TeacherState.default.set()
-    except exceptions.BotBlocked:
-        await message.answer("Не удалось отправить фото! Пользователь заблокировал меня! Может что то еще?",
+            await message.answer("Работа отправлена!Что делаем дальше?", reply_markup=data['markupDefaultMenu'])
+        except exceptions.BotBlocked:
+            await message.answer("Не удалось отправить документ! Пользователь заблокировал меня! Может что то еще?",
                              reply_markup=data['markupDefaultMenu'])
         await TeacherState.default.set()
-    except Exception as err:
-        print(err)
 
 
-@dp.callback_query_handler(user_id=teacher, text_contains="end", state="*")
+@dp.callback_query_handler(user_id=teacher, text_contains="endGethomework", state=TeacherState.all_states)
 async def end_examination(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup()
     await call.message.delete()

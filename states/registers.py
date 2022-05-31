@@ -13,4 +13,5 @@ class Questions_registrs(StatesGroup):
     error_surname = State()
     error_age = State()
     error_class = State()
+    pay = State()
 
