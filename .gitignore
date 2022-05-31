@@ -1,2 +1,2 @@
 *.env
-*bd_bot.db
+bd_bot.db
