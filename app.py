@@ -1,5 +1,6 @@
+from data.config import logger
 async def on_startapp(dp):
-    print("бот запущен")
+    logger.info("бот запущен")
     from utils.notify_admins import on_startapp_notify
     await on_startapp_notify(dp)
 
@@ -11,7 +12,9 @@ async def on_startapp(dp):
 
 
 if __name__ == '__main__':
-    from aiogram import executor
-    from hendlers import dp
-
-    executor.start_polling(dp, on_startup=on_startapp)
+    try:
+        from aiogram import executor
+        from hendlers import dp
+        executor.start_polling(dp, on_startup=on_startapp)
+    except Exception as err:
+        logger.exception(err)

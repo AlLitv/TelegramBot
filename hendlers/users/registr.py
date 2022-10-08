@@ -1,5 +1,5 @@
 from aiogram.dispatcher.storage import FSMContextProxy
-
+from  data.config import logger
 from loader import dp
 from aiogram.dispatcher import FSMContext
 from aiogram import types

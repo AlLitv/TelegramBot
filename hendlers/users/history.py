@@ -23,7 +23,7 @@ async def history(user_id):
         date_now = datetime.today().date()
         difference = date_now - date_start
         time_now = datetime.now().hour
-        time_start = 23
+        time_start = 12
         delay_in_second = 6
         difference_days = difference.days
         if day_six and difference_days == 5 and time_now == time_start:

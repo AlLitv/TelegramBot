@@ -4,7 +4,6 @@ from aiogram.dispatcher.filters import Command
 from data.config import admin_id
 from aiogram.dispatcher import FSMContext
 from states import AdminState
-import sqlite3
 from data.sqllite3_bd import add_info_bd_content
 
 markupmenu = types.InlineKeyboardMarkup(row_width=4,

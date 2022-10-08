@@ -1,5 +1,43 @@
 import os # работа с Операционной системой
+import logging.config
 
+LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'default_formatter': {
+            'format': '[%(levelname)s:%(asctime)s] %(message)s'
+        },
+    },
+
+    'handlers': {
+        'stream_handler': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'default_formatter',
+        },
+        'file':{
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'default_formatter',
+            'filename': 'bot.log',
+            'maxBytes': 1024,
+            'backupCount': 3,
+        }
+    },
+
+    'loggers': {
+        'my_logger': {
+            'handlers': ['stream_handler', 'file'],
+            'level': 'DEBUG',
+            'propagate': True
+        }
+    }
+}
+
+# Создайте Logger
+logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger('my_logger')
+logger.info('Настройка логгирования окончена!')
 
 from dotenv import load_dotenv
 
@@ -10,10 +48,7 @@ load_dotenv()
 BOT_TOKEN = str(os.getenv('BOT_TOKEN'))
 
 
-admin_id = [
-    864770563,
-    448768892
-]
+admin_id = str(os.getenv('ID_ADMIN')).split(',')
 
 
 teacher = 448768892
