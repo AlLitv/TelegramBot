@@ -38,8 +38,8 @@ async def start_registers(message: types.Message, state: FSMContext):
         await Questions_registrs.questions_name.set()
         await message.answer('Ты начал регистрацию! '
                             'Введи свое имя.')
-        text = 'Новая регистрация!'
-        print(text)
+        text = 'startig new user registration'
+        logger.info(text)
         await dp.bot.send_message(chat_id=admin_id[0], text=text)
     else:
         await message.answer("Ты уже зарегистрирован!")
@@ -114,6 +114,8 @@ async def end_registrs(message: types.Message, state: FSMContext):
                                                      data['age'],
                                                      date
                                                      )
+            logger.info(f"registration completed NAME: {data['name']} SURNAME: {data['surname']} CLASS: {data['class']}"
+                        f"ID: {message.from_user.id}")
             await dp.bot.send_message(chat_id=admin_id[1], text=f'Пользователь {data["name"] + " " + data["surname"]}'
                                                                 f' Подтвердите оплату.')
         await state.finish()

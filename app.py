@@ -1,6 +1,5 @@
 from data.config import logger
 async def on_startapp(dp):
-    logger.info("бот запущен")
     from utils.notify_admins import on_startapp_notify
     await on_startapp_notify(dp)
 

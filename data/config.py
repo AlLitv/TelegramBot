@@ -37,7 +37,6 @@ LOGGING_CONFIG = {
 # Создайте Logger
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger('my_logger')
-logger.info('Настройка логгирования окончена!')
 
 from dotenv import load_dotenv
 
