@@ -1,4 +1,1 @@
-*.env
-*.log
-venv/
-bd_bot.db
+**.env
